@@ -34,6 +34,11 @@
     border-radius: var(--radius);
     box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 10px 24px rgba(0,0,0,0.06);
     padding: calc(var(--pad) * 1.25);
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+  .card.danger {
+    background: #b91c1c; /* red-700 */
+    color: #fff;
   }
   h1 {
     font-size: 1.25rem;
@@ -58,15 +63,26 @@
     border: 1px solid #cbd5e1;
     border-radius: 10px;
     outline: none;
+    background: #fff;
+    color: #0f172a;
+  }
+  .card.danger input[type="number"] {
+    background: #fee2e2;      /* red-100 */
+    border-color: #fecaca;    /* red-200 */
+    color: #7f1d1d;           /* red-900 text for legibility on light input */
   }
   input[type="number"]:focus { border-color: #64748b; }
   .muted { color: #64748b; font-size: 0.9rem; }
+  .card.danger .muted { color: #fde68a; } /* amber-200 for contrast */
   .result {
     margin-top: 18px;
     padding: 18px;
     background: #f1f5f9;
     border-radius: 12px;
     text-align: center;
+  }
+  .card.danger .result {
+    background: rgba(255,255,255,0.12);
   }
   .result .big {
     font-size: 2rem;
@@ -75,23 +91,30 @@
   .result .big strong {
     font-weight: 800;
   }
+  .warn {
+    margin-top: 8px;
+    font-size: 0.95rem;
+    text-align: center;
+    display: none;
+  }
+  .card.danger .warn {
+    display: block;
+    font-weight: 700;
+  }
   .note {
     margin-top: 14px;
     font-size: 0.9rem;
     color: #475569;
     text-align: center;
   }
-  .warn {
-    margin-top: 8px;
-    font-size: 0.9rem;
-    color: #b45309; /* amber-ish */
-    text-align: center;
+  .card.danger .note {
+    color: #fde68a; /* amber-200 */
   }
 </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card">
+    <div class="card" id="card">
       <h1>Ariya Charge % Calculator</h1>
 
       <div class="grid">
@@ -106,17 +129,9 @@
         </div>
       </div>
 
-      <div class="grid">
-        <div>
-          <label for="mppercent">Efficiency (miles per 1%)</label>
-          <input type="number" id="mppercent" value="2.5" min="0.1" step="0.1" inputmode="decimal">
-          <div class="muted">Recommended: 2.5. Use 2.0 for extra-conservative.</div>
-        </div>
-      </div>
-
       <div class="result" id="out" aria-live="polite">
         <span class="big">Charge to <strong id="pct">--%</strong></span>
-        <div class="warn" id="cap" style="display:none;">Trip requires full charge with current inputs.</div>
+        <div class="warn" id="cap">Unable to make trip at 100%.</div>
       </div>
 
       <div class="note">
@@ -129,42 +144,44 @@
 (function(){
   const miles = document.getElementById('miles');
   const buffer = document.getElementById('buffer');
-  const mppercent = document.getElementById('mppercent');
   const pctOut = document.getElementById('pct');
+  const card = document.getElementById('card');
   const cap = document.getElementById('cap');
+
+  const EFF = 2.5; // hard-locked efficiency (miles per 1%)
 
   // Restore previous values (if any)
   const saved = JSON.parse(localStorage.getItem('ariyacalc') || '{}');
   if (saved.miles != null) miles.value = saved.miles;
   if (saved.buffer != null) buffer.value = saved.buffer;
-  if (saved.eff != null) mppercent.value = saved.eff;
 
   function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
 
   function compute(){
     const m = Number(miles.value || 0);
     const buf = Number(buffer.value || 0);
-    const eff = Number(mppercent.value || 2.5);
 
     // persist
-    localStorage.setItem('ariyacalc', JSON.stringify({ miles: m, buffer: buf, eff: eff }));
+    localStorage.setItem('ariyacalc', JSON.stringify({ miles: m, buffer: buf }));
 
-    if (eff <= 0) {
-      pctOut.textContent = "--%";
-      cap.style.display = "none";
-      return;
-    }
-
-    let pct = (m + buf) / eff;   // percent required
+    let pct = (m + buf) / EFF;   // percent required
     pct = Math.ceil(pct);        // round up to whole percent
-    const capped = pct > 100;
+    const exceeds = pct > 100;
     pct = clamp(pct, 0, 100);
 
     pctOut.textContent = pct + "%";
-    cap.style.display = capped ? "block" : "none";
+
+    // Toggle danger state + message
+    if (exceeds) {
+      card.classList.add('danger');
+      cap.style.display = "block";
+    } else {
+      card.classList.remove('danger');
+      cap.style.display = "none";
+    }
   }
 
-  [miles, buffer, mppercent].forEach(el => el.addEventListener('input', compute));
+  [miles, buffer].forEach(el => el.addEventListener('input', compute));
   compute();
 })();
 </script>
