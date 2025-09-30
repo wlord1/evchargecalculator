@@ -58,22 +58,24 @@
   }
   input[type="number"] {
     width: 100%;
-    font-size: 1rem;
-    padding: 10px 12px;
+    font-size: 16px;          /* stops iOS zoom */
+    padding: 6px 8px;         /* slimmer padding */
     border: 1px solid #cbd5e1;
-    border-radius: 10px;
+    border-radius: 6px;       /* less pill-like */
     outline: none;
     background: #fff;
     color: #0f172a;
+    -webkit-appearance: none;
+    appearance: none;
   }
   .card.danger input[type="number"] {
     background: #fee2e2;      /* red-100 */
     border-color: #fecaca;    /* red-200 */
-    color: #7f1d1d;           /* red-900 text for legibility on light input */
+    color: #7f1d1d;
   }
   input[type="number"]:focus { border-color: #64748b; }
   .muted { color: #64748b; font-size: 0.9rem; }
-  .card.danger .muted { color: #fde68a; } /* amber-200 for contrast */
+  .card.danger .muted { color: #fde68a; }
   .result {
     margin-top: 18px;
     padding: 18px;
@@ -108,7 +110,15 @@
     text-align: center;
   }
   .card.danger .note {
-    color: #fde68a; /* amber-200 */
+    color: #fde68a;
+  }
+
+  /* Desktop-specific: cap input width so they don't stretch */
+  @media (min-width: 768px) {
+    input[type="number"] {
+      max-width: 140px;
+      display: inline-block;
+    }
   }
 </style>
 </head>
@@ -155,8 +165,6 @@
   if (saved.miles != null) miles.value = saved.miles;
   if (saved.buffer != null) buffer.value = saved.buffer;
 
-  function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
-
   function compute(){
     const m = Number(miles.value || 0);
     const buf = Number(buffer.value || 0);
@@ -165,13 +173,11 @@
     localStorage.setItem('ariyacalc', JSON.stringify({ miles: m, buffer: buf }));
 
     let pct = (m + buf) / EFF;   // percent required
-    pct = Math.ceil(pct);        // round up to whole percent
+    pct = Math.ceil(pct);        // round up
     const exceeds = pct > 100;
-    pct = clamp(pct, 0, 100);
 
     pctOut.textContent = pct + "%";
 
-    // Toggle danger state + message
     if (exceeds) {
       card.classList.add('danger');
       cap.style.display = "block";
