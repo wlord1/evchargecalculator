@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="EV % Calc">
 <meta name="theme-color" content="#ffffff">
+<meta name="color-scheme" content="light dark">
 
 <style>
   :root {
@@ -15,6 +16,7 @@
     --radius: 12px;
     --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   }
+  html { -webkit-text-size-adjust: 100%; }
   body {
     font-family: var(--font);
     margin: 0;
@@ -79,6 +81,12 @@
     color: #475569;
     text-align: center;
   }
+  .warn {
+    margin-top: 8px;
+    font-size: 0.9rem;
+    color: #b45309; /* amber-ish */
+    text-align: center;
+  }
 </style>
 </head>
 <body>
@@ -89,11 +97,11 @@
       <div class="grid">
         <div>
           <label for="miles">Trip distance (miles)</label>
-          <input type="number" id="miles" placeholder="e.g., 120" min="0" step="1">
+          <input type="number" id="miles" placeholder="e.g., 120" min="0" step="1" inputmode="numeric">
         </div>
         <div>
           <label for="buffer">Arrival range (miles)</label>
-          <input type="number" id="buffer" value="10" min="0" step="1">
+          <input type="number" id="buffer" value="10" min="0" step="1" inputmode="numeric">
           <div class="muted">Recommended: 10 miles.</div>
         </div>
       </div>
@@ -101,13 +109,14 @@
       <div class="grid">
         <div>
           <label for="mppercent">Efficiency (miles per 1%)</label>
-          <input type="number" id="mppercent" value="2.5" min="0.1" step="0.1">
+          <input type="number" id="mppercent" value="2.5" min="0.1" step="0.1" inputmode="decimal">
           <div class="muted">Recommended: 2.5. Use 2.0 for extra-conservative.</div>
         </div>
       </div>
 
-      <div class="result" id="out">
+      <div class="result" id="out" aria-live="polite">
         <span class="big">Charge to <strong id="pct">--%</strong></span>
+        <div class="warn" id="cap" style="display:none;">Trip requires full charge with current inputs.</div>
       </div>
 
       <div class="note">
@@ -122,7 +131,13 @@
   const buffer = document.getElementById('buffer');
   const mppercent = document.getElementById('mppercent');
   const pctOut = document.getElementById('pct');
-  const out = document.getElementById('out');
+  const cap = document.getElementById('cap');
+
+  // Restore previous values (if any)
+  const saved = JSON.parse(localStorage.getItem('ariyacalc') || '{}');
+  if (saved.miles != null) miles.value = saved.miles;
+  if (saved.buffer != null) buffer.value = saved.buffer;
+  if (saved.eff != null) mppercent.value = saved.eff;
 
   function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
 
@@ -130,16 +145,23 @@
     const m = Number(miles.value || 0);
     const buf = Number(buffer.value || 0);
     const eff = Number(mppercent.value || 2.5);
+
+    // persist
+    localStorage.setItem('ariyacalc', JSON.stringify({ miles: m, buffer: buf, eff: eff }));
+
     if (eff <= 0) {
       pctOut.textContent = "--%";
+      cap.style.display = "none";
       return;
     }
 
-    let pct = (m + buf) / eff;
-    pct = Math.ceil(pct);        // round up
+    let pct = (m + buf) / eff;   // percent required
+    pct = Math.ceil(pct);        // round up to whole percent
+    const capped = pct > 100;
     pct = clamp(pct, 0, 100);
 
     pctOut.textContent = pct + "%";
+    cap.style.display = capped ? "block" : "none";
   }
 
   [miles, buffer, mppercent].forEach(el => el.addEventListener('input', compute));
