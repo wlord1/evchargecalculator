@@ -11,72 +11,42 @@
 <meta name="color-scheme" content="light dark">
 
 <style>
-  :root {
-    --pad: 14px;
-    --radius: 12px;
-    --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  }
+  :root { --pad:14px; --radius:12px; --font: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji"; }
   html { -webkit-text-size-adjust: 100%; }
-  body {
-    font-family: var(--font);
-    margin: 0;
-    padding: 0;
-    background: #f6f7f9;
-    color: #0f172a;
+  body { font-family: var(--font); margin:0; padding:0; background:#f6f7f9; color:#0f172a; }
+  .wrap { max-width:680px; margin:40px auto; padding:0 var(--pad); }
+  .card { background:#fff; border-radius:var(--radius); box-shadow:0 1px 3px rgba(0,0,0,.08),0 10px 24px rgba(0,0,0,.06); padding:calc(var(--pad)*1.25); transition:background .2s,color .2s,border-color .2s; }
+  .card.danger { background:#b91c1c; color:#fff; }
+  h1 { font-size:1.25rem; margin:0 0 12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin:10px 0 6px; }
+  label { display:block; font-weight:600; font-size:.9rem; margin-bottom:6px; }
+  input[type="number"]{
+    width:100%; font-size:16px; padding:6px 8px;
+    border:1px solid #cbd5e1; border-radius:6px; outline:none;
+    background:#fff; color:#0f172a; -webkit-appearance:none; appearance:none;
   }
-  .wrap { max-width: 680px; margin: 40px auto; padding: 0 var(--pad); }
-  .card {
-    background: white;
-    border-radius: var(--radius);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 10px 24px rgba(0,0,0,0.06);
-    padding: calc(var(--pad) * 1.25);
-    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-  }
-  .card.danger { background: #b91c1c; color: #fff; }
-  h1 { font-size: 1.25rem; margin: 0 0 12px; }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px; margin: 10px 0 6px;
-  }
-  label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
-  input[type="number"] {
-    width: 100%; font-size: 16px; padding: 6px 8px;
-    border: 1px solid #cbd5e1; border-radius: 6px;
-    outline: none; background: #fff; color: #0f172a;
-    -webkit-appearance: none; appearance: none;
-  }
-  .card.danger input[type="number"] { background: #fee2e2; border-color: #fecaca; color: #7f1d1d; }
-  input[type="number"]:focus { border-color: #64748b; }
-  .muted { color: #64748b; font-size: 0.9rem; }
-  .card.danger .muted { color: #fde68a; }
+  .card.danger input[type="number"]{ background:#fee2e2; border-color:#fecaca; color:#7f1d1d; }
+  input[type="number"]:focus{ border-color:#64748b; }
+  .muted{ color:#64748b; font-size:.9rem; }
+  .card.danger .muted{ color:#fde68a; }
 
-  .result {
-    margin-top: 18px; padding: 18px; background: #f1f5f9; border-radius: 12px; text-align: center;
-  }
-  .card.danger .result { background: rgba(255,255,255,0.12); }
-  .result .big { font-size: 2rem; line-height: 1.2; }
-  .result .big strong { font-weight: 800; }
-  .warn { margin-top: 8px; font-size: 0.95rem; text-align: center; display: none; }
-  .card.danger .warn { display: block; font-weight: 700; }
+  .result{ margin-top:18px; padding:18px; background:#f1f5f9; border-radius:12px; text-align:center; }
+  .card.danger .result{ background:rgba(255,255,255,.12); }
+  .result .big{ font-size:2rem; line-height:1.2; }
+  .result .big strong{ font-weight:800; }
+  .warn{ margin-top:8px; font-size:.95rem; text-align:center; display:none; }
+  .card.danger .warn{ display:block; font-weight:700; }
 
   /* Efficiency block */
-  .eff {
-    margin-top: 12px; padding: 12px; background: #f8fafc;
-    border: 1px solid #e2e8f0; border-radius: 10px;
-  }
-  .card.danger .eff { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.25); }
-  .inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .chip {
-    border: 1px solid #cbd5e1; border-radius: 999px;
-    padding: 6px 10px; background: #fff; font-weight: 600; cursor: pointer;
-  }
-  .chip:active { transform: translateY(1px); }
-  .card.danger .chip { background: #fff; color: #7f1d1d; }
+  .eff{ margin-top:12px; padding:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; }
+  .card.danger .eff{ background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.25); }
+  .inline{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .chip{ border:1px solid #cbd5e1; border-radius:999px; padding:6px 10px; background:#fff; font-weight:600; cursor:pointer; }
+  .chip:active{ transform:translateY(1px); }
+  .card.danger .chip{ background:#fff; color:#7f1d1d; }
 
-  @media (min-width: 768px) {
-    input[type="number"] { max-width: 140px; display: inline-block; }
-  }
+  /* Desktop: keep inputs compact */
+  @media (min-width:768px){ input[type="number"]{ max-width:140px; display:inline-block; } }
 </style>
 </head>
 <body>
@@ -87,10 +57,12 @@
       <div class="grid">
         <div>
           <label for="miles">Trip distance (miles)</label>
-          <input type="number" id="miles" value="100" min="0" step="1" inputmode="numeric">
+          <!-- blank by default -->
+          <input type="number" id="miles" placeholder="e.g., 120" min="0" step="1" inputmode="numeric">
         </div>
         <div>
           <label for="buffer">Arrival range (miles)</label>
+          <!-- pre-populated to 10 -->
           <input type="number" id="buffer" value="10" min="0" step="1" inputmode="numeric">
           <div class="muted">Recommended minimum: 10 miles.</div>
         </div>
@@ -124,33 +96,40 @@
   const effInp = document.getElementById('eff');
   const chips  = document.querySelectorAll('.chip');
 
-  // Restore saved values or defaults
+  // Restore saved values or use first-run defaults: miles blank, buffer 10, eff 2.5
   const saved = JSON.parse(localStorage.getItem('ariyacalc') || '{}');
-  if (saved.miles  != null) miles.value  = saved.miles;  else miles.value  = 100;
+  if (saved.miles  != null) miles.value  = saved.miles;          // else leave blank
   if (saved.buffer != null) buffer.value = saved.buffer; else buffer.value = 10;
-  if (saved.eff    != null) effInp.value = saved.eff;
+  if (saved.eff    != null) effInp.value = saved.eff;    else effInp.value = 2.5;
 
   function compute(){
-    const m   = Number(miles.value  || 0);
+    const m   = (miles.value === "" ? NaN : Number(miles.value)); // treat blank as NaN
     const buf = Number(buffer.value || 0);
     const eff = Number(effInp.value || 2.5);
 
     // Save state
-    localStorage.setItem('ariyacalc', JSON.stringify({ miles: m, buffer: buf, eff }));
+    localStorage.setItem('ariyacalc', JSON.stringify({
+      miles: (isNaN(m) ? "" : m),
+      buffer: buf,
+      eff
+    }));
 
+    // If miles is blank, show --% until a value is entered
+    if (isNaN(m)) {
+      pctOut.textContent = "--%";
+      card.classList.remove('danger');
+      cap.style.display = "none";
+      return;
+    }
+
+    // required % (allow >100), round up
     let pct = (m + buf) / eff;
     pct = Math.ceil(pct);
     const exceeds = pct > 100;
 
     pctOut.textContent = pct + "%";
-
-    if (exceeds) {
-      card.classList.add('danger');
-      cap.style.display = "block";
-    } else {
-      card.classList.remove('danger');
-      cap.style.display = "none";
-    }
+    if (exceeds) { card.classList.add('danger'); cap.style.display = "block"; }
+    else { card.classList.remove('danger'); cap.style.display = "none"; }
   }
 
   [miles, buffer, effInp].forEach(el => el.addEventListener('input', compute));
