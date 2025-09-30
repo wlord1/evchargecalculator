@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ariya1 Charge % Calculator</title>
+<title>Ariya charge % calculator</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="EV % Calc">
@@ -84,7 +84,7 @@
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>EV Charge % Calculator</h1>
+      <h1>Ariya Charge % Calculator</h1>
 
       <div class="grid">
         <div>
@@ -92,7 +92,7 @@
           <input type="number" id="miles" placeholder="e.g., 120" min="0" step="1">
         </div>
         <div>
-          <label for="buffer">Safety buffer (miles)</label>
+          <label for="buffer">Arrival range (miles)</label>
           <input type="number" id="buffer" value="10" min="0" step="1">
           <div class="muted">Recommended: 10 miles.</div>
         </div>
