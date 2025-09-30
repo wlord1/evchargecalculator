@@ -61,7 +61,7 @@
   }
   .cell {
     width:64px; height:64px; border:1px solid #cbd5e1; border-radius:10px; background:#fff;
-    font-size:1.5rem; font-weight:800; color:#111; /* darker text */
+    font-size:1.5rem; font-weight:800; color:#111;
     display:flex; align-items:center; justify-content:center;
     cursor:pointer; user-select:none;
   }
@@ -71,6 +71,7 @@
   .btn { border:1px solid #cbd5e1; background:#fff; padding:8px 12px; border-radius:10px; font-weight:600; cursor:pointer; }
   .btn:active { transform: translateY(1px); }
   .status { text-align:center; margin-top:6px; font-weight:600; }
+  select { padding:6px 8px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; }
 </style>
 </head>
 <body>
@@ -115,7 +116,16 @@
         <div class="ttt-controls">
           <button class="btn" id="ttt-new">New Game</button>
           <label class="inline" style="gap:6px;">
-          <input type="checkbox" id="ttt-vsai" checked> Check box to play against phone
+            <input type="checkbox" id="ttt-vsai" checked> Check box to play against phone
+          </label>
+          <label class="inline" style="gap:6px;">
+            Difficulty:
+            <select id="ttt-diff">
+              <option value="easy">Easy</option>
+              <option value="normal" selected>Normal</option>
+              <option value="hard">Hard</option>
+              <option value="unbeatable">Unbeatable</option>
+            </select>
           </label>
         </div>
       </div>
@@ -166,11 +176,12 @@
   chips.forEach(btn => btn.addEventListener('click', () => { effInp.value = btn.dataset.eff; compute(); }));
   compute();
 
-  // ===== Tic-Tac-Toe =====
-  const boardEl = document.getElementById('board');
+  // ===== Tic-Tac-Toe with difficulty =====
+  const boardEl  = document.getElementById('board');
   const statusEl = document.getElementById('ttt-status');
-  const newBtn = document.getElementById('ttt-new');
-  const vsAi = document.getElementById('ttt-vsai');
+  const newBtn   = document.getElementById('ttt-new');
+  const vsAi     = document.getElementById('ttt-vsai');
+  const diffSel  = document.getElementById('ttt-diff');
 
   let board = Array(9).fill(null);
   let turn = 'X';
@@ -202,30 +213,88 @@
     return null;
   }
 
-  function emptySquares(b){ return b.map((v,i)=>v?null:i).filter(i=>i!==null); }
+  function empties(b){ return b.map((v,i)=>v?null:i).filter(i=>i!==null); }
 
-  function bestAiMove(){
-    const me = 'O', opp = 'X';
-    const empties = emptySquares(board);
-    for (const i of empties){ const test = board.slice(); test[i] = me; if (winner(test) === me) return i; }
-    for (const i of empties){ const test = board.slice(); test[i] = opp; if (winner(test) === opp) return i; }
-    if (board[4] === null) return 4;
-    const corners = [0,2,6,8].filter(i => board[i] === null);
+  // Minimax for perfect play (AI = 'O', human = 'X')
+  function minimax(b, player){
+    const w = winner(b);
+    if (w === 'O') return {score: +1};
+    if (w === 'X') return {score: -1};
+    if (empties(b).length === 0) return {score: 0};
+
+    if (player === 'O'){
+      // maximize
+      let best = {score: -Infinity, move: null};
+      for (const i of empties(b)){
+        const copy = b.slice(); copy[i] = 'O';
+        const res = minimax(copy, 'X');
+        if (res.score > best.score) best = {score: res.score, move: i};
+      }
+      return best;
+    } else {
+      // minimize
+      let best = {score: +Infinity, move: null};
+      for (const i of empties(b)){
+        const copy = b.slice(); copy[i] = 'X';
+        const res = minimax(copy, 'O');
+        if (res.score < best.score) best = {score: res.score, move: i};
+      }
+      return best;
+    }
+  }
+
+  // Heuristic (fast) move: win -> block -> center -> corner -> random
+  function heuristicMove(){
+    const me='O', opp='X';
+    const e = empties(board);
+    // win
+    for (const i of e){ const t=board.slice(); t[i]=me; if (winner(t)===me) return i; }
+    // block
+    for (const i of e){ const t=board.slice(); t[i]=opp; if (winner(t)===opp) return i; }
+    if (board[4]==null) return 4;
+    const corners=[0,2,6,8].filter(i=>board[i]==null);
     if (corners.length) return corners[Math.floor(Math.random()*corners.length)];
-    return empties[Math.floor(Math.random()*empties.length)];
+    return e[Math.floor(Math.random()*e.length)];
+  }
+
+  function aiMove(){
+    const difficulty = diffSel.value; // easy|normal|hard|unbeatable
+    const e = empties(board);
+    if (e.length===0) return;
+
+    // Blunder rates by difficulty
+    const blunderRates = { easy: 0.5, normal: 0.2, hard: 0.05, unbeatable: 0 };
+    const blunder = Math.random() < blunderRates[difficulty];
+
+    let moveIndex;
+    if (difficulty === 'unbeatable' || !blunder){
+      // use perfect minimax for the actual decision (fast enough for 3x3)
+      moveIndex = minimax(board, 'O').move;
+      // fallback (shouldn't happen) to heuristic if undefined
+      if (moveIndex == null) moveIndex = heuristicMove();
+    } else {
+      // blunder: pick a random legal move
+      moveIndex = e[Math.floor(Math.random()*e.length)];
+    }
+    if (moveIndex != null) move(moveIndex);
   }
 
   function move(i){
     if (gameOver || board[i]) return;
     board[i] = turn;
+
     const w = winner(board);
     if (w){ statusEl.textContent = `${w} wins!`; gameOver = true; renderBoard(); return; }
-    if (emptySquares(board).length === 0){ statusEl.textContent = `It's a draw.`; gameOver = true; renderBoard(); return; }
+    if (empties(board).length === 0){ statusEl.textContent = `It's a draw.`; gameOver = true; renderBoard(); return; }
+
+    // switch turn
     turn = (turn === 'X') ? 'O' : 'X';
     statusEl.textContent = `${turn} to move`;
     renderBoard();
+
+    // AI move if enabled and it's O's turn
     if (!gameOver && vsAi.checked && turn === 'O'){
-      setTimeout(() => { const ai = bestAiMove(); if (ai !== undefined){ move(ai); } }, 200);
+      setTimeout(aiMove, 220); // small delay feels natural
     }
   }
 
@@ -239,8 +308,8 @@
 
   newBtn.addEventListener('click', resetGame);
   vsAi.addEventListener('change', resetGame);
+  diffSel.addEventListener('change', resetGame);
   renderBoard();
-
 })();
 </script>
 </body>
