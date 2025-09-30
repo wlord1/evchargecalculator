@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>EV Charge % Calculator</title>
 
-<!-- iPhone PWA polish (optional but nice) -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="EV % Calc">
 <meta name="theme-color" content="#ffffff">
@@ -36,12 +35,7 @@
   }
   h1 {
     font-size: 1.25rem;
-    margin: 0 0 8px;
-  }
-  p.sub {
-    margin: 0 0 16px;
-    color: #475569;
-    font-size: 0.95rem;
+    margin: 0 0 12px;
   }
   .grid {
     display: grid;
@@ -64,7 +58,6 @@
     outline: none;
   }
   input[type="number"]:focus { border-color: #64748b; }
-  .row { margin: 10px 0; }
   .muted { color: #64748b; font-size: 0.9rem; }
   .result {
     margin-top: 18px;
@@ -74,16 +67,17 @@
     text-align: center;
   }
   .result .big {
-    font-size: 2rem;           /* larger on iPhone */
+    font-size: 2rem;
     line-height: 1.2;
   }
   .result .big strong {
     font-weight: 800;
   }
-  .footer {
-    margin-top: 10px;
-    font-size: 0.85rem;
-    color: #64748b;
+  .note {
+    margin-top: 14px;
+    font-size: 0.9rem;
+    color: #475569;
+    text-align: center;
   }
 </style>
 </head>
@@ -91,7 +85,6 @@
   <div class="wrap">
     <div class="card">
       <h1>EV Charge % Calculator</h1>
-      <p class="sub">Based on your car's observed efficiency: <strong>2.5 miles per 1% battery</strong> (100 miles ≈ 40%).</p>
 
       <div class="grid">
         <div>
@@ -117,8 +110,8 @@
         <span class="big">Charge to <strong id="pct">--%</strong></span>
       </div>
 
-      <div class="footer">
-        Formula: <code>required % = (miles + buffer) ÷ (miles-per-%)</code>. Values are rounded up to the next whole percent.
+      <div class="note">
+        Based on your car’s observed efficiency: <strong>2.5 miles per 1% battery</strong> (100 miles ≈ 40%).
       </div>
     </div>
   </div>
@@ -139,20 +132,17 @@
     const eff = Number(mppercent.value || 2.5);
     if (eff <= 0) {
       pctOut.textContent = "--%";
-      out.setAttribute('aria-label', 'Efficiency must be greater than zero');
       return;
     }
 
-    let pct = (m + buf) / eff;   // percent required
-    pct = Math.ceil(pct);        // round up to whole percent
+    let pct = (m + buf) / eff;
+    pct = Math.ceil(pct);        // round up
     pct = clamp(pct, 0, 100);
 
     pctOut.textContent = pct + "%";
   }
 
   [miles, buffer, mppercent].forEach(el => el.addEventListener('input', compute));
-
-  // Init
   compute();
 })();
 </script>
