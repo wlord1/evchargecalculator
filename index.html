@@ -71,7 +71,20 @@
   .btn { border:1px solid #cbd5e1; background:#fff; padding:8px 12px; border-radius:10px; font-weight:600; cursor:pointer; }
   .btn:active { transform: translateY(1px); }
   .status { text-align:center; margin-top:6px; font-weight:600; }
-  select { padding:6px 8px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; }
+
+  /* Fix select visibility */
+  select {
+    padding:6px 8px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    background:#fff;
+    color:#111;
+    font-size:0.9rem;
+  }
+  .card.danger select {
+    background:#fff;
+    color:#111;
+  }
 </style>
 </head>
 <body>
@@ -215,7 +228,6 @@
 
   function empties(b){ return b.map((v,i)=>v?null:i).filter(i=>i!==null); }
 
-  // Minimax for perfect play (AI = 'O', human = 'X')
   function minimax(b, player){
     const w = winner(b);
     if (w === 'O') return {score: +1};
@@ -223,7 +235,6 @@
     if (empties(b).length === 0) return {score: 0};
 
     if (player === 'O'){
-      // maximize
       let best = {score: -Infinity, move: null};
       for (const i of empties(b)){
         const copy = b.slice(); copy[i] = 'O';
@@ -232,7 +243,6 @@
       }
       return best;
     } else {
-      // minimize
       let best = {score: +Infinity, move: null};
       for (const i of empties(b)){
         const copy = b.slice(); copy[i] = 'X';
@@ -243,13 +253,10 @@
     }
   }
 
-  // Heuristic (fast) move: win -> block -> center -> corner -> random
   function heuristicMove(){
     const me='O', opp='X';
     const e = empties(board);
-    // win
     for (const i of e){ const t=board.slice(); t[i]=me; if (winner(t)===me) return i; }
-    // block
     for (const i of e){ const t=board.slice(); t[i]=opp; if (winner(t)===opp) return i; }
     if (board[4]==null) return 4;
     const corners=[0,2,6,8].filter(i=>board[i]==null);
@@ -258,22 +265,18 @@
   }
 
   function aiMove(){
-    const difficulty = diffSel.value; // easy|normal|hard|unbeatable
+    const difficulty = diffSel.value;
     const e = empties(board);
     if (e.length===0) return;
 
-    // Blunder rates by difficulty
     const blunderRates = { easy: 0.5, normal: 0.2, hard: 0.05, unbeatable: 0 };
     const blunder = Math.random() < blunderRates[difficulty];
 
     let moveIndex;
     if (difficulty === 'unbeatable' || !blunder){
-      // use perfect minimax for the actual decision (fast enough for 3x3)
       moveIndex = minimax(board, 'O').move;
-      // fallback (shouldn't happen) to heuristic if undefined
       if (moveIndex == null) moveIndex = heuristicMove();
     } else {
-      // blunder: pick a random legal move
       moveIndex = e[Math.floor(Math.random()*e.length)];
     }
     if (moveIndex != null) move(moveIndex);
@@ -287,14 +290,12 @@
     if (w){ statusEl.textContent = `${w} wins!`; gameOver = true; renderBoard(); return; }
     if (empties(board).length === 0){ statusEl.textContent = `It's a draw.`; gameOver = true; renderBoard(); return; }
 
-    // switch turn
     turn = (turn === 'X') ? 'O' : 'X';
     statusEl.textContent = `${turn} to move`;
     renderBoard();
 
-    // AI move if enabled and it's O's turn
     if (!gameOver && vsAi.checked && turn === 'O'){
-      setTimeout(aiMove, 220); // small delay feels natural
+      setTimeout(aiMove, 220);
     }
   }
 
