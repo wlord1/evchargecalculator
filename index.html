@@ -61,11 +61,12 @@
   }
   .cell {
     width:64px; height:64px; border:1px solid #cbd5e1; border-radius:10px; background:#fff;
-    font-size:1.5rem; font-weight:800; display:flex; align-items:center; justify-content:center;
+    font-size:1.5rem; font-weight:800; color:#111; /* darker text */
+    display:flex; align-items:center; justify-content:center;
     cursor:pointer; user-select:none;
   }
   .cell:active { transform: translateY(1px); }
-  .card.danger .cell { background:#fff; color:#7f1d1d; }
+  .card.danger .cell { background:#fff; color:#111; }
   .ttt-controls { display:flex; gap:10px; justify-content:center; align-items:center; margin-top:6px; flex-wrap:wrap; }
   .btn { border:1px solid #cbd5e1; background:#fff; padding:8px 12px; border-radius:10px; font-weight:600; cursor:pointer; }
   .btn:active { transform: translateY(1px); }
@@ -80,12 +81,10 @@
       <div class="grid">
         <div>
           <label for="miles">Trip distance (miles)</label>
-          <!-- blank by default -->
           <input type="number" id="miles" placeholder="e.g., 120" min="0" step="1" inputmode="numeric">
         </div>
         <div>
           <label for="buffer">Arrival range (miles)</label>
-          <!-- pre-populated to 10 -->
           <input type="number" id="buffer" value="10" min="0" step="1" inputmode="numeric">
           <div class="muted">Recommended minimum: 10 miles.</div>
         </div>
@@ -116,7 +115,7 @@
         <div class="ttt-controls">
           <button class="btn" id="ttt-new">New Game</button>
           <label class="inline" style="gap:6px;">
-            <input type="checkbox" id="ttt-vsai"> Play vs Phone
+            <input type="checkbox" id="ttt-vsai"> Check box to play against phone
           </label>
         </div>
       </div>
@@ -135,21 +134,17 @@
   const effInp = document.getElementById('eff');
   const chips  = document.querySelectorAll('.chip');
 
-  // Restore saved values or use first-run defaults: miles blank, buffer 10, eff 2.5
   const saved = JSON.parse(localStorage.getItem('ariyacalc') || '{}');
-  if (saved.miles  != null) miles.value  = saved.miles;          // else leave blank
+  if (saved.miles  != null) miles.value  = saved.miles;
   if (saved.buffer != null) buffer.value = saved.buffer; else buffer.value = 10;
   if (saved.eff    != null) effInp.value = saved.eff;    else effInp.value = 2.5;
 
   function compute(){
-    const m   = (miles.value === "" ? NaN : Number(miles.value)); // treat blank as NaN
+    const m   = (miles.value === "" ? NaN : Number(miles.value));
     const buf = Number(buffer.value || 0);
     const eff = Number(effInp.value || 2.5);
 
-    // Save state
-    localStorage.setItem('ariyacalc', JSON.stringify({
-      miles: (isNaN(m) ? "" : m), buffer: buf, eff
-    }));
+    localStorage.setItem('ariyacalc', JSON.stringify({ miles: (isNaN(m) ? "" : m), buffer: buf, eff }));
 
     if (isNaN(m)) {
       pctOut.textContent = "--%";
@@ -158,7 +153,6 @@
       return;
     }
 
-    // required % (allow >100), round up
     let pct = (m + buf) / eff;
     pct = Math.ceil(pct);
     const exceeds = pct > 100;
@@ -178,14 +172,14 @@
   const newBtn = document.getElementById('ttt-new');
   const vsAi = document.getElementById('ttt-vsai');
 
-  let board = Array(9).fill(null); // null | 'X' | 'O'
+  let board = Array(9).fill(null);
   let turn = 'X';
   let gameOver = false;
 
   const lines = [
-    [0,1,2],[3,4,5],[6,7,8], // rows
-    [0,3,6],[1,4,7],[2,5,8], // cols
-    [0,4,8],[2,4,6]          // diags
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
   ];
 
   function renderBoard(){
@@ -211,26 +205,13 @@
   function emptySquares(b){ return b.map((v,i)=>v?null:i).filter(i=>i!==null); }
 
   function bestAiMove(){
-    // Simple AI: 1) Win  2) Block  3) Center  4) Corner  5) Random
     const me = 'O', opp = 'X';
     const empties = emptySquares(board);
-
-    // try winning
-    for (const i of empties){
-      const test = board.slice(); test[i] = me;
-      if (winner(test) === me) return i;
-    }
-    // try block
-    for (const i of empties){
-      const test = board.slice(); test[i] = opp;
-      if (winner(test) === opp) return i;
-    }
-    // center
+    for (const i of empties){ const test = board.slice(); test[i] = me; if (winner(test) === me) return i; }
+    for (const i of empties){ const test = board.slice(); test[i] = opp; if (winner(test) === opp) return i; }
     if (board[4] === null) return 4;
-    // corners
     const corners = [0,2,6,8].filter(i => board[i] === null);
     if (corners.length) return corners[Math.floor(Math.random()*corners.length)];
-    // random
     return empties[Math.floor(Math.random()*empties.length)];
   }
 
@@ -240,18 +221,11 @@
     const w = winner(board);
     if (w){ statusEl.textContent = `${w} wins!`; gameOver = true; renderBoard(); return; }
     if (emptySquares(board).length === 0){ statusEl.textContent = `It's a draw.`; gameOver = true; renderBoard(); return; }
-
-    // switch turn
     turn = (turn === 'X') ? 'O' : 'X';
     statusEl.textContent = `${turn} to move`;
     renderBoard();
-
-    // AI move if enabled and it's O's turn
     if (!gameOver && vsAi.checked && turn === 'O'){
-      setTimeout(() => {
-        const ai = bestAiMove();
-        if (ai !== undefined){ move(ai); }
-      }, 200);
+      setTimeout(() => { const ai = bestAiMove(); if (ai !== undefined){ move(ai); } }, 200);
     }
   }
 
