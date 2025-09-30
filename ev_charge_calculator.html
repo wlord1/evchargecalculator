@@ -1,0 +1,200 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EV Charge % Calculator</title>
+<style>
+  :root {
+    --pad: 14px;
+    --radius: 12px;
+    --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  }
+  body {
+    font-family: var(--font);
+    margin: 0;
+    padding: 0;
+    background: #f6f7f9;
+    color: #0f172a;
+  }
+  .wrap {
+    max-width: 680px;
+    margin: 40px auto;
+    padding: 0 var(--pad);
+  }
+  .card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 10px 24px rgba(0,0,0,0.06);
+    padding: calc(var(--pad) * 1.25);
+  }
+  h1 {
+    font-size: 1.25rem;
+    margin: 0 0 8px;
+  }
+  p.sub {
+    margin: 0 0 16px;
+    color: #475569;
+    font-size: 0.95rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 10px 0 6px;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+  input[type="number"] {
+    width: 100%;
+    font-size: 1rem;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    outline: none;
+  }
+  input[type="number"]:focus { border-color: #64748b; }
+  .row { margin: 10px 0; }
+  .muted { color: #64748b; font-size: 0.9rem; }
+  .result {
+    margin-top: 14px;
+    padding: 14px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  .footer {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+  .inline { display: flex; align-items: center; gap: 8px; }
+  .inline input[type="checkbox"] { transform: scale(1.1); }
+  .btn {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .btn:active { transform: translateY(1px); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>EV Charge % Calculator</h1>
+      <p class="sub">Based on your car's observed efficiency: <strong>2.5 miles per 1% battery</strong> (100 miles used ≈ 40%).</p>
+
+      <div class="grid">
+        <div>
+          <label for="miles">Trip distance (miles)</label>
+          <input type="number" id="miles" placeholder="e.g., 120" min="0" step="1">
+        </div>
+        <div>
+          <label for="buffer">Safety buffer (miles)</label>
+          <input type="number" id="buffer" value="10" min="0" step="1">
+          <div class="muted">Tip: 10–20 miles is common.</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label for="mppercent">Efficiency (miles per 1%)</label>
+          <input type="number" id="mppercent" value="2.5" min="0.1" step="0.1">
+          <div class="muted">Use 2.0 for extra-conservative planning.</div>
+        </div>
+        <div class="row">
+          <label>&nbsp;</label>
+          <div class="inline">
+            <input type="checkbox" id="round5" checked>
+            <label for="round5" style="margin:0;font-weight:500;">Round up to nearest 5%</label>
+          </div>
+          <button class="btn" id="swap">Swap: Given % → Miles</button>
+        </div>
+      </div>
+
+      <div class="result" id="out">Enter miles to see required %.</div>
+      <div class="footer">
+        Formula: <code>required % = (miles + buffer) ÷ (miles-per-%)</code>. Clamp 0–100.  
+        Reverse: <code>miles = (% × miles-per-%) − buffer</code>.
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const miles = document.getElementById('miles');
+  const buffer = document.getElementById('buffer');
+  const mppercent = document.getElementById('mppercent');
+  const round5 = document.getElementById('round5');
+  const out = document.getElementById('out');
+  const swap = document.getElementById('swap');
+
+  function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+  function roundUp5(x){ return Math.ceil(x / 5) * 5; }
+
+  function compute(){
+    const m = Number(miles.value || 0);
+    const buf = Number(buffer.value || 0);
+    const eff = Number(mppercent.value || 2.5);
+    if (eff <= 0) { out.textContent = "Efficiency must be > 0."; return; }
+
+    let pct = (m + buf) / eff; // percent required
+    if (round5.checked) pct = roundUp5(pct);
+    pct = clamp(pct, 0, 100);
+
+    const note = (pct === 100) ? " (max charge reached)" : "";
+    out.textContent = `Charge to about ${pct.toFixed(0)}%${note}.  (m=${m}, buffer=${buf}, eff=${eff} mi/%)`;
+  }
+
+  function computeReverse(){
+    const p = Number(miles.value || 0); // here we reuse the "miles" box to enter a %
+    const buf = Number(buffer.value || 0);
+    const eff = Number(mppercent.value || 2.5);
+    if (eff <= 0) { out.textContent = "Efficiency must be > 0."; return; }
+    const milesOut = (p * eff) - buf;
+    out.textContent = `With ${p}% you can plan ~${Math.max(0, milesOut).toFixed(0)} miles.`;
+  }
+
+  // Live updates
+  [miles, buffer, mppercent, round5].forEach(el => el.addEventListener('input', compute));
+
+  // Swap mode for quick reverse calc
+  let reverse = false;
+  swap.addEventListener('click', () => {
+    reverse = !reverse;
+    if (reverse){
+      document.querySelector('label[for="miles"]').textContent = "Battery % available";
+      miles.placeholder = "e.g., 55";
+      out.textContent = "Enter % to see miles.";
+      swap.textContent = "Swap: Given miles → Required %";
+      [miles, buffer, mppercent, round5].forEach(el => el.removeEventListener('input', compute));
+      [miles, buffer, mppercent].forEach(el => el.addEventListener('input', computeReverse));
+      round5.disabled = true;
+    } else {
+      document.querySelector('label[for="miles"]').textContent = "Trip distance (miles)";
+      miles.placeholder = "e.g., 120";
+      out.textContent = "Enter miles to see required %.";
+      swap.textContent = "Swap: Given % → Miles";
+      [miles, buffer, mppercent].forEach(el => el.removeEventListener('input', computeReverse));
+      [miles, buffer, mppercent, round5].forEach(el => el.addEventListener('input', compute));
+      round5.disabled = false;
+    }
+  });
+
+  // Init
+  compute();
+})();
+</script>
+</body>
+</html>
